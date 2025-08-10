@@ -12,6 +12,11 @@ A Next.js application that generates HTML5 tabs with JavaScript and inline CSS f
 
 This application creates HTML5 code with JavaScript and inline CSS that can be deployed on MOODLE LMS. The focus is on generating clean, standalone HTML that works without external dependencies.
 
+## Assignment 1 Demo
+<video src="./public/videos/Assignment 1.mp4" controls width="720">
+  Your browser does not support the video tag.
+</video>
+
 ## Features Implemented
 
 ### ✅ Required Features (Assignment 1)
@@ -199,11 +204,3 @@ The application has been tested for:
 ## License
 
 This project is created for educational purposes as part of La Trobe University coursework.
-
----
-
-**Important:** Remember to update the student name and number in the following files:
-- `src/components/Header.tsx`
-- `src/components/Footer.tsx`
-- `src/app/about/page.tsx`
-- `README.md`
