@@ -1,0 +1,70 @@
+service: cwa-tab-generator
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  environment:
+    NODE_ENV: production
+    DATABASE_URL: ${env:DATABASE_URL, 'file:./prisma/dev.db'}
+
+plugins:
+  - serverless-nextjs-plugin
+
+custom:
+  nextjs:
+    nextConfigDir: ./
+    domainName: ${env:DOMAIN_NAME, ''}
+    certificateArn: ${env:CERTIFICATE_ARN, ''}
+
+functions:
+  # API Functions
+  tabs-api:
+    handler: src/app/api/tabs/route.handler
+    events:
+      - http:
+          path: api/tabs
+          method: get
+      - http:
+          path: api/tabs
+          method: post
+      - http:
+          path: api/tabs/{id}
+          method: delete
+          
+  court-room-api:
+    handler: src/app/api/court-room/route.handler
+    events:
+      - http:
+          path: api/court-room
+          method: get
+      - http:
+          path: api/court-room
+          method: post
+
+# Resources for RDS database (optional)
+resources:
+  Resources:
+    Database:
+      Type: AWS::RDS::DBInstance
+      Properties:
+        Engine: postgres
+        DBInstanceClass: db.t3.micro
+        AllocatedStorage: 20
+        DBName: cwa_database
+        MasterUsername: ${env:DB_USERNAME, 'admin'}
+        MasterUserPassword: ${env:DB_PASSWORD}
+        VPCSecurityGroups:
+          - !Ref DatabaseSecurityGroup
+        
+    DatabaseSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: Security group for RDS database
+        SecurityGroupIngress:
+          - IpProtocol: tcp
+            FromPort: 5432
+            ToPort: 5432
+            CidrIp: 0.0.0.0/0
