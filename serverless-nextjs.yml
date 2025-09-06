@@ -1,0 +1,30 @@
+service: cwa-assignment2
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  environment:
+    DATABASE_URL: ${env:DATABASE_URL}
+    NODE_ENV: production
+
+plugins:
+  - serverless-nextjs-plugin
+
+custom:
+  nextjs:
+    # This will automatically create Lambda functions for:
+    # - All your API routes (/api/tabs, /api/court-room)
+    # - Server-side rendering
+    # - Static file serving
+    buildCommand: npm run build
+    assetIgnorePatterns:
+      - "*.map"
+      - "test-results/**"
+      - "playwright-report/**"
+
+# The plugin automatically creates these Lambda functions:
+# 1. Default Lambda - handles SSR and routing
+# 2. API Lambda - handles /api/* routes  
+# 3. Image Lambda - optimizes images
+# 4. CloudFront - CDN for static assets

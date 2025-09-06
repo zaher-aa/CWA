@@ -36,6 +36,7 @@ export default function CourtRoomPage() {
   const [selectedCode, setSelectedCode] = useState("");
   const [codeOutput, setCodeOutput] = useState("");
   const [codeDebugInfo, setCodeDebugInfo] = useState("");
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   
   const messageTimeouts = useRef<NodeJS.Timeout[]>([]);
 
@@ -110,13 +111,25 @@ export default function CourtRoomPage() {
             const allFixed = codeIssues.every(issue => issue.fixed);
             const hasCriticalMessages = messages.some(msg => msg.critical && !msg.dismissed);
             
-            if (allFixed && !hasCriticalMessages) {
+            const isWin = allFixed && !hasCriticalMessages;
+            
+            if (isWin) {
               setCourtCase("🎉 LEGAL COMPLIANCE ACHIEVED! \\n\\nCongratulations! You successfully:\\n✅ Fixed all critical code issues\\n✅ Properly handled all compliance messages\\n\\nYou demonstrated proper software legal compliance by:\\n• Ensuring accessibility (ADA compliance)\\n• Securing user data (GDPR/privacy laws)\\n• Maintaining functionality (contract law)\\n\\nYou're now a legally compliant developer who understands that code quality and message handling are both essential for avoiding legal consequences!");
             } else if (!allFixed) {
               setCourtCase("⏰ Time's Up! You failed to fix critical code issues. Your company faces legal consequences for non-compliance!");
             } else if (hasCriticalMessages) {
               setCourtCase("⏰ Time's Up! You ignored critical messages. Legal consequences are triggered by unhandled compliance issues!");
             }
+            
+            // Update the database with final results
+            if (currentSessionId) {
+              updateGameSession(currentSessionId, {
+                finalScore: isWin ? 100 : 0,
+                issuesFixed: codeIssues.filter(issue => issue.fixed).length,
+                completed: isWin,
+              });
+            }
+            
             setGameOver(true);
             return 0;
           }
@@ -206,6 +219,62 @@ export default function CourtRoomPage() {
     scheduleMessage(120000, 'agile', 'fix user authentication');
   };
 
+  const saveGameSession = async (sessionData: {
+    playerName?: string;
+    timeLimit: number;
+    finalScore?: number;
+    issuesFixed: number;
+    totalIssues: number;
+    completed: boolean;
+  }) => {
+    try {
+      const response = await fetch('/api/court-room', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(sessionData),
+      });
+      
+      if (response.ok) {
+        const session = await response.json();
+        setCurrentSessionId(session.id);
+        logger.trackUserAction('court_room_session_saved', {
+          sessionId: session.id,
+          completed: sessionData.completed,
+          issuesFixed: sessionData.issuesFixed,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to save court room session:', error);
+    }
+  };
+
+  const updateGameSession = async (sessionId: string, updateData: {
+    finalScore?: number;
+    issuesFixed?: number;
+    completed?: boolean;
+  }) => {
+    try {
+      const response = await fetch('/api/court-room', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: sessionId, ...updateData }),
+      });
+      
+      if (response.ok) {
+        logger.trackUserAction('court_room_session_updated', {
+          sessionId,
+          ...updateData,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to update court room session:', error);
+    }
+  };
+
   const triggerCourtCase = (task: string) => {
     let caseType = '';
     if (task.includes('accessibility')) {
@@ -230,11 +299,20 @@ export default function CourtRoomPage() {
     setGameOver(true);
   };
 
-  const startGame = () => {
+  const startGame = async () => {
     const sessionId = Date.now().toString();
     logger.trackUserAction('court_room_game_started', { 
       timeLimit: customTime,
       sessionId 
+    });
+    
+    // Save game session to database when starting
+    await saveGameSession({
+      playerName: `Player_${sessionId.slice(-6)}`,
+      timeLimit: customTime * 60,
+      issuesFixed: 0,
+      totalIssues: 3,
+      completed: false,
     });
     
     setGameStarted(true);
