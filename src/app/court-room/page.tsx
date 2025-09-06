@@ -297,7 +297,7 @@ export default function CourtRoomPage() {
       let fixedIssues = [];
       
       // Debug what's in the code
-      output += `🔍 Looking for patterns in: "${selectedCode.substring(0, 50)}${selectedCode.length > 50 ? '...' : '}"\n\n`;
+      output += `🔍 Looking for patterns in: "${selectedCode.substring(0, 50)}${selectedCode.length > 50 ? '...' : ''}"\n\n`;
       
       if (selectedCode.includes('alt=') || selectedCode.includes('alt ')) {
         output += "✅ Found accessibility fix: alt attribute detected\n";
