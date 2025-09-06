@@ -9,6 +9,7 @@ interface Message {
   text: string;
   task: string;
   urgent?: boolean;
+  critical?: boolean; // New: marks messages that have legal consequences
   timestamp: number;
   dismissed?: boolean;
 }
@@ -103,8 +104,18 @@ export default function CourtRoomPage() {
       const timer = setInterval(() => {
         setTimeRemaining((prev) => {
           if (prev <= 1) {
+            // Check win conditions: all issues fixed AND no unhandled critical messages
+            const allFixed = codeIssues.every(issue => issue.fixed);
+            const hasCriticalMessages = messages.some(msg => msg.critical && !msg.dismissed);
+            
+            if (allFixed && !hasCriticalMessages) {
+              setCourtCase("🎉 LEGAL COMPLIANCE ACHIEVED! \\n\\nCongratulations! You successfully:\\n✅ Fixed all critical code issues\\n✅ Properly handled all compliance messages\\n\\nYou demonstrated proper software legal compliance by:\\n• Ensuring accessibility (ADA compliance)\\n• Securing user data (GDPR/privacy laws)\\n• Maintaining functionality (contract law)\\n\\nYou're now a legally compliant developer who understands that code quality and message handling are both essential for avoiding legal consequences!");
+            } else if (!allFixed) {
+              setCourtCase("⏰ Time's Up! You failed to fix critical code issues. Your company faces legal consequences for non-compliance!");
+            } else if (hasCriticalMessages) {
+              setCourtCase("⏰ Time's Up! You ignored critical messages. Legal consequences are triggered by unhandled compliance issues!");
+            }
             setGameOver(true);
-            checkWinCondition();
             return 0;
           }
           return prev - 1;
@@ -113,7 +124,7 @@ export default function CourtRoomPage() {
 
       return () => clearInterval(timer);
     }
-  }, [gameStarted, gameOver]);
+  }, [gameStarted, gameOver, codeIssues, messages]);
 
   useEffect(() => {
     if (gameStarted && !gameOver) {
@@ -137,12 +148,14 @@ export default function CourtRoomPage() {
             sender,
             text,
             task: task || text,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            critical: !!task // Task-related messages are critical
           };
           
           setMessages(prev => [...prev, message]);
           
           if (task) {
+            // First escalation after 2 minutes - urgent message
             setTimeout(() => {
               if (!gameOver) {
                 const urgentMessage: Message = {
@@ -151,13 +164,26 @@ export default function CourtRoomPage() {
                   text: `URGENT: ${text}`,
                   task,
                   urgent: true,
+                  critical: true,
                   timestamp: Date.now()
                 };
                 setMessages(prev => [...prev, urgentMessage]);
                 
+                // Final escalation after 2 more minutes - legal consequences
                 setTimeout(() => {
                   if (!gameOver) {
-                    triggerCourtCase(task);
+                    // Check if the critical message is still active (not dismissed)
+                    setMessages(current => {
+                      const hasCriticalMessage = current.some(msg => 
+                        msg.task === task && msg.critical && !msg.dismissed
+                      );
+                      
+                      if (hasCriticalMessage) {
+                        triggerCourtCase(task);
+                      }
+                      
+                      return current;
+                    });
                   }
                 }, 120000); // 2 more minutes
               }
@@ -171,23 +197,23 @@ export default function CourtRoomPage() {
 
     scheduleMessage(20000, 'boss');
     scheduleMessage(30000, 'family'); 
-    scheduleMessage(40000, 'agile', 'fix alt in img1');
+    scheduleMessage(40000, 'agile', 'fix accessibility issue');
     scheduleMessage(60000, 'boss');
-    scheduleMessage(80000, 'agile', 'fix input validation');
+    scheduleMessage(80000, 'agile', 'fix security validation');
     scheduleMessage(100000, 'family');
-    scheduleMessage(120000, 'agile', 'Fix User login');
+    scheduleMessage(120000, 'agile', 'fix user authentication');
   };
 
   const triggerCourtCase = (task: string) => {
     let caseType = '';
-    if (task.includes('alt')) {
-      setCourtCase("You are being sued for breaking the Disability Discrimination Act - Missing alt attributes make your website inaccessible!");
+    if (task.includes('accessibility')) {
+      setCourtCase("⚖️ ACCESSIBILITY LAWSUIT! \n\nYou ignored critical accessibility messages and are now being sued under the Americans with Disabilities Act (ADA). Missing alt attributes make your website inaccessible to users with screen readers. \n\nLegal consequence: $50,000 in fines + mandatory accessibility audit + reputation damage.\n\nLesson: Always prioritize accessibility compliance messages!");
       caseType = 'accessibility_violation';
-    } else if (task.includes('validation')) {
-      setCourtCase("You are being sued under Data Protection Laws - Your application was hacked due to lack of input validation!");
+    } else if (task.includes('security')) {
+      setCourtCase("⚖️ DATA BREACH LAWSUIT! \n\nYou ignored critical security messages and your application was hacked due to lack of input validation. User personal data was exposed, violating GDPR and state privacy laws.\n\nLegal consequence: $2.7M in fines + class action lawsuit + mandatory security audit.\n\nLesson: Security compliance messages must be addressed immediately!");
       caseType = 'security_violation';
-    } else if (task.includes('login')) {
-      setCourtCase("Your company has been declared bankrupt - Users cannot access your application and you're not getting paid!");
+    } else if (task.includes('authentication')) {
+      setCourtCase("💸 CONTRACT BREACH & BANKRUPTCY! \n\nYou ignored critical functionality messages and users cannot access your application due to broken authentication. This violates your service contracts.\n\nLegal consequence: Loss of all customers + contract breach lawsuits + business failure.\n\nLesson: Core functionality issues are business-critical compliance matters!");
       caseType = 'functionality_violation';
     }
     
@@ -242,27 +268,50 @@ export default function CourtRoomPage() {
       });
     }
     
-    setCodeIssues(prev => 
-      prev.map(issue => 
-        issue.id === issueId ? { ...issue, fixed: true } : issue
-      )
+    const updatedIssues = codeIssues.map(issue => 
+      issue.id === issueId ? { ...issue, fixed: true } : issue
     );
+    
+    setCodeIssues(updatedIssues);
+    
+    // Check win conditions: all issues fixed AND no unhandled critical messages
+    const allFixed = updatedIssues.every(issue => issue.fixed);
+    const hasCriticalMessages = messages.some(msg => msg.critical && !msg.dismissed);
+    
+    if (allFixed && !hasCriticalMessages && !courtCase && !gameOver) {
+      setCourtCase("🎉 LEGAL COMPLIANCE ACHIEVED! \\n\\nCongratulations! You successfully:\\n✅ Fixed all critical code issues\\n✅ Properly handled all compliance messages\\n\\nYou demonstrated proper software legal compliance by:\\n• Ensuring accessibility (ADA compliance)\\n• Securing user data (GDPR/privacy laws)\\n• Maintaining functionality (contract law)\\n\\nYou're now a legally compliant developer who understands that code quality and message handling are both essential for avoiding legal consequences!");
+      setGameOver(true);
+    }
   };
 
   const dismissMessage = (messageId: string) => {
-    setMessages(prev =>
-      prev.map(msg =>
+    setMessages(prev => {
+      const updated = prev.map(msg =>
         msg.id === messageId ? { ...msg, dismissed: true } : msg
-      )
-    );
+      );
+      
+      // Check if dismissing this message creates a win condition
+      setTimeout(() => {
+        const allFixed = codeIssues.every(issue => issue.fixed);
+        const hasCriticalMessages = updated.some(msg => msg.critical && !msg.dismissed);
+        
+        if (allFixed && !hasCriticalMessages && !courtCase && !gameOver) {
+          setCourtCase("🎉 LEGAL COMPLIANCE ACHIEVED! \\n\\nCongratulations! You successfully:\\n✅ Fixed all critical code issues\\n✅ Properly handled all compliance messages\\n\\nYou demonstrated proper software legal compliance by:\\n• Ensuring accessibility (ADA compliance)\\n• Securing user data (GDPR/privacy laws)\\n• Maintaining functionality (contract law)\\n\\nYou're now a legally compliant developer who understands that code quality and message handling are both essential for avoiding legal consequences!");
+          setGameOver(true);
+        }
+      }, 100);
+      
+      return updated;
+    });
   };
 
   const checkWinCondition = () => {
     const allFixed = codeIssues.every(issue => issue.fixed);
-    if (allFixed && !courtCase) {
-      setCourtCase("🎉 Congratulations! You completed all tasks without any legal violations! You're a compliant developer!");
-    } else if (!allFixed && !courtCase) {
-      setCourtCase("⏰ Time's Up! You failed to fix critical issues. Your company faces legal consequences for non-compliance!");
+    const hasCriticalMessages = messages.some(msg => msg.critical && !msg.dismissed);
+    
+    if (allFixed && !hasCriticalMessages && !courtCase && !gameOver) {
+      setCourtCase("🎉 LEGAL COMPLIANCE ACHIEVED! \\n\\nCongratulations! You successfully:\\n✅ Fixed all critical code issues\\n✅ Properly handled all compliance messages\\n\\nYou demonstrated proper software legal compliance by:\\n• Ensuring accessibility (ADA compliance)\\n• Securing user data (GDPR/privacy laws)\\n• Maintaining functionality (contract law)\\n\\nYou're now a legally compliant developer who understands that code quality and message handling are both essential for avoiding legal consequences!");
+      setGameOver(true);
     }
   };
 
@@ -327,15 +376,15 @@ export default function CourtRoomPage() {
               📋 How to Play:
             </h3>
             <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-2">
-              <li>• **GOAL**: Fix all 3 code issues before time runs out</li>
-              <li>• **🔧 Fix Issue**: Click to resolve critical problems</li>
-              <li>• **View Code**: See broken vs fixed code examples</li>
-              <li>• **Messages**: Dismiss distractions (❌) or they escalate!</li>
-              <li>• **Code Editor**: Practice coding (doesn't affect game)</li>
-              <li>• **CONSEQUENCES**: Ignore issues = legal trouble!</li>
-              <li>• Accessibility violations → Disability Act lawsuit</li>
-              <li>• Security holes → Data breach lawsuit</li>  
-              <li>• Broken functionality → Contract violation & bankruptcy</li>
+              <li>• **GOAL**: Fix all 3 code issues AND dismiss critical messages before time runs out</li>
+              <li>• **🔧 Fix Issue**: Click to resolve critical problems that prevent legal violations</li>
+              <li>• **View Code**: See broken vs fixed code examples with legal context</li>
+              <li>• **Critical Messages (⚠️)**: Must be dismissed to avoid escalation to lawsuits</li>
+              <li>• **Code Editor**: Practice coding (educational only, doesn't affect game)</li>
+              <li>• **LEGAL COMPLIANCE**: Both code fixes AND message handling are required!</li>
+              <li>• **Accessibility**: Missing alt text violates Disability Discrimination Act (ADA)</li>
+              <li>• **Security**: Input validation prevents data breaches under privacy laws</li>  
+              <li>• **Functionality**: Working authentication ensures contract compliance</li>
             </ul>
           </div>
         </div>
@@ -381,6 +430,8 @@ export default function CourtRoomPage() {
                 className={`p-3 rounded-lg border ${
                   message.urgent 
                     ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                    : message.critical
+                    ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800'
                     : message.sender === 'boss' 
                     ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
                     : message.sender === 'family'
@@ -391,7 +442,10 @@ export default function CourtRoomPage() {
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="font-medium text-sm capitalize text-gray-900 dark:text-white">
+                      {message.critical && '⚠️ '}
+                      {message.urgent && '🚨 '}
                       {message.sender === 'boss' ? '👔 Boss' : message.sender === 'family' ? '👨‍👩‍👧‍👦 Family' : '🔄 Agile Team'}
+                      {message.critical && ' (CRITICAL)'}
                     </div>
                     <div className="text-sm text-gray-700 dark:text-gray-300 mt-1">
                       {message.text}
@@ -436,7 +490,15 @@ export default function CourtRoomPage() {
                 </div>
                 
                 <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                  <strong>Violation:</strong> {issue.violation}
+                  <strong>Legal Risk:</strong> {issue.violation}
+                  <br/>
+                  <strong>Education:</strong> {
+                    issue.type === 'accessibility' 
+                      ? 'Alt attributes help screen readers describe images to visually impaired users. Required by ADA.'
+                      : issue.type === 'security'
+                      ? 'Input validation prevents XSS attacks and data breaches. Required by GDPR/CCPA.'
+                      : 'Working authentication systems ensure users can access services they paid for. Contract law.'
+                  }
                 </div>
                 
                 <details className="mb-3">
