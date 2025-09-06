@@ -260,7 +260,9 @@ export default function CourtRoomPage() {
   const checkWinCondition = () => {
     const allFixed = codeIssues.every(issue => issue.fixed);
     if (allFixed && !courtCase) {
-      setCourtCase("Congratulations! You completed all tasks without any legal violations!");
+      setCourtCase("🎉 Congratulations! You completed all tasks without any legal violations! You're a compliant developer!");
+    } else if (!allFixed && !courtCase) {
+      setCourtCase("⏰ Time's Up! You failed to fix critical issues. Your company faces legal consequences for non-compliance!");
     }
   };
 
@@ -322,15 +324,18 @@ export default function CourtRoomPage() {
 
           <div className="mt-8 bg-yellow-50 dark:bg-yellow-900/20 p-6 rounded-lg">
             <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200 mb-3">
-              📋 How it Works:
+              📋 How to Play:
             </h3>
             <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-2">
-              <li>• Fix code issues before time runs out</li>
-              <li>• Handle interruptions from boss, family, and agile team</li>
-              <li>• Ignore critical tasks = face legal consequences!</li>
-              <li>• Missing accessibility fixes = Disability Act violation</li>
-              <li>• No input validation = Data breach lawsuit</li>
-              <li>• Broken login = Contract violation & bankruptcy</li>
+              <li>• **GOAL**: Fix all 3 code issues before time runs out</li>
+              <li>• **🔧 Fix Issue**: Click to resolve critical problems</li>
+              <li>• **View Code**: See broken vs fixed code examples</li>
+              <li>• **Messages**: Dismiss distractions (❌) or they escalate!</li>
+              <li>• **Code Editor**: Practice coding (doesn't affect game)</li>
+              <li>• **CONSEQUENCES**: Ignore issues = legal trouble!</li>
+              <li>• Accessibility violations → Disability Act lawsuit</li>
+              <li>• Security holes → Data breach lawsuit</li>  
+              <li>• Broken functionality → Contract violation & bankruptcy</li>
             </ul>
           </div>
         </div>

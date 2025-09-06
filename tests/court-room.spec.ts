@@ -53,7 +53,7 @@ test.describe('Court Room Simulation', () => {
     
     // Fix an issue (first button)
     await page.click('button:has-text("🔧 Fix Issue")');  
-    await expect(page.locator('span:has-text("✅"):first')).toBeVisible();
+    await expect(page.locator('span:has-text("✅")').first()).toBeVisible();
   });
 
   test('should show messages during gameplay', async ({ page }) => {
