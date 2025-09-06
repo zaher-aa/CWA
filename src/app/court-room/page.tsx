@@ -34,6 +34,8 @@ export default function CourtRoomPage() {
   const [gameOver, setGameOver] = useState(false);
   const [courtCase, setCourtCase] = useState<string | null>(null);
   const [selectedCode, setSelectedCode] = useState("");
+  const [codeOutput, setCodeOutput] = useState("");
+  const [codeDebugInfo, setCodeDebugInfo] = useState("");
   
   const messageTimeouts = useRef<NodeJS.Timeout[]>([]);
 
@@ -284,6 +286,94 @@ export default function CourtRoomPage() {
     }
   };
 
+  const runCode = () => {
+    setCodeOutput("");
+    setCodeDebugInfo("");
+    
+    try {
+      // Check if code contains fixes for the issues
+      let output = "🔍 Code Analysis Results:\n\n";
+      let fixedIssues = [];
+      
+      if (selectedCode.includes('alt=') || selectedCode.includes('alt ')) {
+        output += "✅ Found accessibility fix: alt attribute detected\n";
+        fixedIssues.push("1");
+      }
+      
+      if (selectedCode.includes('sanitiz') || selectedCode.includes('validat') || selectedCode.includes('replace')) {
+        output += "✅ Found security fix: input validation/sanitization detected\n";
+        fixedIssues.push("2");
+      }
+      
+      if (selectedCode.includes('function') && selectedCode.includes('login') || 
+          selectedCode.includes('authenticat') || selectedCode.includes('credentials')) {
+        output += "✅ Found functionality fix: authentication logic detected\n";
+        fixedIssues.push("3");
+      }
+      
+      if (fixedIssues.length > 0) {
+        output += `\n🎉 Code Editor Auto-Fix: ${fixedIssues.length} issue(s) automatically resolved!\n`;
+        output += "Your code demonstrates understanding of the legal compliance requirements.\n";
+        
+        // Auto-fix the issues that were coded correctly
+        fixedIssues.forEach(issueId => {
+          const updatedIssues = codeIssues.map(issue => 
+            issue.id === issueId ? { ...issue, fixed: true } : issue
+          );
+          setCodeIssues(updatedIssues);
+        });
+        
+        logger.trackUserAction('code_editor_auto_fix', {
+          fixedCount: fixedIssues.length,
+          fixedIssues: fixedIssues,
+          codeLength: selectedCode.length
+        });
+      } else {
+        output += "ℹ️ No recognized fixes found. Try implementing:\n";
+        output += "- Alt attributes for images (accessibility)\n";
+        output += "- Input validation/sanitization (security)\n"; 
+        output += "- Authentication functions (functionality)\n";
+      }
+      
+      setCodeOutput(output);
+    } catch (error) {
+      setCodeOutput(`❌ Error: ${error.message}`);
+    }
+  };
+  
+  const debugCode = () => {
+    setCodeOutput("");
+    setCodeDebugInfo("");
+    
+    let debug = "🐛 Debug Information:\n\n";
+    debug += `📏 Code length: ${selectedCode.length} characters\n`;
+    debug += `📝 Lines: ${selectedCode.split('\n').length}\n\n`;
+    
+    debug += "🔍 Code Quality Check:\n";
+    
+    // Check for common issues
+    if (!selectedCode.trim()) {
+      debug += "⚠️ No code entered\n";
+    } else {
+      debug += "✅ Code present\n";
+    }
+    
+    if (selectedCode.includes('function')) {
+      debug += "✅ Function definition found\n";
+    }
+    
+    if (selectedCode.includes('//') || selectedCode.includes('/*')) {
+      debug += "✅ Comments found - good practice\n";
+    }
+    
+    debug += "\n💡 Legal Compliance Hints:\n";
+    debug += "- Images need alt attributes for ADA compliance\n";
+    debug += "- User inputs need validation for GDPR compliance\n";
+    debug += "- Login functions need proper error handling\n";
+    
+    setCodeDebugInfo(debug);
+  };
+
   const dismissMessage = (messageId: string) => {
     setMessages(prev => {
       const updated = prev.map(msg =>
@@ -380,7 +470,7 @@ export default function CourtRoomPage() {
               <li>• **🔧 Fix Issue**: Click to resolve critical problems that prevent legal violations</li>
               <li>• **View Code**: See broken vs fixed code examples with legal context</li>
               <li>• **Critical Messages (⚠️)**: Must be dismissed to avoid escalation to lawsuits</li>
-              <li>• **Code Editor**: Practice coding (educational only, doesn't affect game)</li>
+              <li>• **Code Editor**: Write actual fixes for the code issues - successful fixes help complete the game!</li>
               <li>• **LEGAL COMPLIANCE**: Both code fixes AND message handling are required!</li>
               <li>• **Accessibility**: Missing alt text violates Disability Discrimination Act (ADA)</li>
               <li>• **Security**: Input validation prevents data breaches under privacy laws</li>  
@@ -541,13 +631,29 @@ export default function CourtRoomPage() {
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
           />
           <div className="mt-4 flex space-x-2">
-            <button className="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 transition-colors">
+            <button 
+              onClick={runCode}
+              className="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 transition-colors"
+            >
               ▶️ Run Code
             </button>
-            <button className="bg-purple-600 text-white px-4 py-2 rounded text-sm hover:bg-purple-700 transition-colors">
+            <button 
+              onClick={debugCode}
+              className="bg-purple-600 text-white px-4 py-2 rounded text-sm hover:bg-purple-700 transition-colors"
+            >
               🔍 Debug
             </button>
           </div>
+          
+          {/* Code Output */}
+          {(codeOutput || codeDebugInfo) && (
+            <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Output:</h4>
+              <pre className="text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+                {codeOutput || codeDebugInfo}
+              </pre>
+            </div>
+          )}
         </div>
       </div>
 
