@@ -293,22 +293,32 @@ export default function CourtRoomPage() {
     try {
       // Check if code contains fixes for the issues
       let output = "🔍 Code Analysis Results:\n\n";
+      output += `📝 Analyzing ${selectedCode.length} characters of code...\n\n`;
       let fixedIssues = [];
+      
+      // Debug what's in the code
+      output += `🔍 Looking for patterns in: "${selectedCode.substring(0, 50)}${selectedCode.length > 50 ? '...' : '}"\n\n`;
       
       if (selectedCode.includes('alt=') || selectedCode.includes('alt ')) {
         output += "✅ Found accessibility fix: alt attribute detected\n";
         fixedIssues.push("1");
+      } else {
+        output += "❌ No alt attribute found (try: alt=\"description\")\n";
       }
       
       if (selectedCode.includes('sanitiz') || selectedCode.includes('validat') || selectedCode.includes('replace')) {
         output += "✅ Found security fix: input validation/sanitization detected\n";
         fixedIssues.push("2");
+      } else {
+        output += "❌ No input validation found (try: replace(), sanitize(), or validate())\n";
       }
       
-      if (selectedCode.includes('function') && selectedCode.includes('login') || 
+      if ((selectedCode.includes('function') && selectedCode.includes('login')) || 
           selectedCode.includes('authenticat') || selectedCode.includes('credentials')) {
         output += "✅ Found functionality fix: authentication logic detected\n";
         fixedIssues.push("3");
+      } else {
+        output += "❌ No authentication logic found (try: function login() or authenticate)\n";
       }
       
       if (fixedIssues.length > 0) {
@@ -316,12 +326,10 @@ export default function CourtRoomPage() {
         output += "Your code demonstrates understanding of the legal compliance requirements.\n";
         
         // Auto-fix the issues that were coded correctly
-        fixedIssues.forEach(issueId => {
-          const updatedIssues = codeIssues.map(issue => 
-            issue.id === issueId ? { ...issue, fixed: true } : issue
-          );
-          setCodeIssues(updatedIssues);
-        });
+        const updatedIssues = codeIssues.map(issue => 
+          fixedIssues.includes(issue.id) ? { ...issue, fixed: true } : issue
+        );
+        setCodeIssues(updatedIssues);
         
         logger.trackUserAction('code_editor_auto_fix', {
           fixedCount: fixedIssues.length,
