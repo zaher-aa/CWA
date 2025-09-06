@@ -51,8 +51,8 @@ test.describe('Court Room Simulation', () => {
     await expect(page.locator('text=Data Protection Laws')).toBeVisible();
     await expect(page.locator('text=Contract Law - Service Unavailable')).toBeVisible();
     
-    // Fix an issue
-    await page.click('button:has-text("🔧 Fix Issue"):first');
+    // Fix an issue (first button)
+    await page.click('button:has-text("🔧 Fix Issue")');  
     await expect(page.locator('span:has-text("✅"):first')).toBeVisible();
   });
 
@@ -104,9 +104,12 @@ test.describe('Court Room Simulation', () => {
     await page.click('button:has-text("🚨 Start Court Room Challenge")');
     
     // Fix all issues quickly
-    await page.click('button:has-text("🔧 Fix Issue"):nth-child(1)');
-    await page.click('button:has-text("🔧 Fix Issue"):nth-child(1)');
-    await page.click('button:has-text("🔧 Fix Issue"):nth-child(1)');
+    const fixButtons = page.locator('button:has-text("🔧 Fix Issue")');
+    const count = await fixButtons.count();
+    for (let i = 0; i < count; i++) {
+      await fixButtons.first().click();
+      await page.waitForTimeout(500); // Small delay between fixes
+    }
     
     // Wait a moment for game to process
     await page.waitForTimeout(1000);

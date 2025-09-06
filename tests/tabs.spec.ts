@@ -9,10 +9,10 @@ test.describe('Tabs Generator', () => {
     await expect(page).toHaveTitle(/Tab Generator/);
     await expect(page.locator('h1')).toContainText('HTML5 Tabs Generator');
     
-    // Check default tabs are present
-    await expect(page.locator('button:has-text("Step 1")')).toBeVisible();
-    await expect(page.locator('button:has-text("Step 2")')).toBeVisible();
-    await expect(page.locator('button:has-text("Step 3")')).toBeVisible();
+    // Check default tabs are present in builder section
+    await expect(page.locator('[aria-label="Tab Headers"] button:has-text("Step 1")').first()).toBeVisible();
+    await expect(page.locator('[aria-label="Tab Headers"] button:has-text("Step 2")').first()).toBeVisible();
+    await expect(page.locator('[aria-label="Tab Headers"] button:has-text("Step 3")').first()).toBeVisible();
   });
 
   test('should add and remove tabs', async ({ page }) => {
@@ -22,7 +22,7 @@ test.describe('Tabs Generator', () => {
     // Add a tab
     await page.click('button:has-text("+ Add Tab")');
     await expect(page.locator('h2:has-text("Tab Builder (4/15)")')).toBeVisible();
-    await expect(page.locator('button:has-text("Step 4")')).toBeVisible();
+    await expect(page.locator('[aria-label="Tab Headers"] button:has-text("Step 4")').first()).toBeVisible();
     
     // Remove a tab
     await page.click('button:has-text("- Remove Tab")');
@@ -30,16 +30,16 @@ test.describe('Tabs Generator', () => {
   });
 
   test('should edit tab header and content', async ({ page }) => {
-    // Click on Step 1 tab
-    await page.click('button:has-text("Step 1")');
+    // Click on Step 1 tab in builder section
+    await page.click('[aria-label="Tab Headers"] button:has-text("Step 1")');
     
     // Edit header
     const headerInput = page.locator('input[placeholder="Enter tab header..."]');
     await headerInput.clear();
     await headerInput.fill('Custom Header');
     
-    // Check if tab header updated
-    await expect(page.locator('button:has-text("Custom Header")')).toBeVisible();
+    // Check if tab header updated in builder section
+    await expect(page.locator('[aria-label="Tab Headers"] button:has-text("Custom Header")').first()).toBeVisible();
     
     // Edit content
     const contentTextarea = page.locator('textarea[placeholder*="e.g."]');
@@ -77,7 +77,7 @@ test.describe('Tabs Generator', () => {
 
   test('should save and load configurations', async ({ page }) => {
     // Customize tabs first
-    await page.click('button:has-text("Step 1")');
+    await page.click('[aria-label="Tab Headers"] button:has-text("Step 1")');
     const headerInput = page.locator('input[placeholder="Enter tab header..."]');
     await headerInput.clear();
     await headerInput.fill('Test Tab');

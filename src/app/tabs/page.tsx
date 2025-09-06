@@ -367,7 +367,7 @@ ${activeContent}
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Tab Headers:
             </label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2" aria-label="Tab Headers">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
