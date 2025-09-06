@@ -296,6 +296,15 @@ export default function CourtRoomPage() {
       totalIssues: codeIssues.length
     });
     
+    // Update database with failed result when court case is triggered
+    if (currentSessionId) {
+      updateGameSession(currentSessionId, {
+        finalScore: 0,
+        issuesFixed: codeIssues.filter(issue => issue.fixed).length,
+        completed: false,
+      });
+    }
+    
     setGameOver(true);
   };
 
@@ -306,13 +315,13 @@ export default function CourtRoomPage() {
       sessionId 
     });
     
-    // Save game session to database when starting
+    // Save game session to database when starting - set as incomplete initially
     await saveGameSession({
       playerName: `Player_${sessionId.slice(-6)}`,
       timeLimit: customTime * 60,
       issuesFixed: 0,
       totalIssues: 3,
-      completed: false,
+      completed: false, // Will be updated when game ends
     });
     
     setGameStarted(true);
@@ -360,6 +369,16 @@ export default function CourtRoomPage() {
     
     if (allFixed && !hasCriticalMessages && !courtCase && !gameOver) {
       setCourtCase("🎉 LEGAL COMPLIANCE ACHIEVED! \\n\\nCongratulations! You successfully:\\n✅ Fixed all critical code issues\\n✅ Properly handled all compliance messages\\n\\nYou demonstrated proper software legal compliance by:\\n• Ensuring accessibility (ADA compliance)\\n• Securing user data (GDPR/privacy laws)\\n• Maintaining functionality (contract law)\\n\\nYou're now a legally compliant developer who understands that code quality and message handling are both essential for avoiding legal consequences!");
+      
+      // Update database with win result
+      if (currentSessionId) {
+        updateGameSession(currentSessionId, {
+          finalScore: 100,
+          issuesFixed: updatedIssues.filter(issue => issue.fixed).length,
+          completed: true,
+        });
+      }
+      
       setGameOver(true);
     }
   };
@@ -433,6 +452,27 @@ export default function CourtRoomPage() {
           fixedIssues: fixedIssues,
           codeLength: selectedCode.length
         });
+        
+        // Check win conditions after auto-fix
+        setTimeout(() => {
+          const allFixed = updatedIssues.every(issue => issue.fixed);
+          const hasCriticalMessages = messages.some(msg => msg.critical && !msg.dismissed);
+          
+          if (allFixed && !hasCriticalMessages && !courtCase && !gameOver) {
+            setCourtCase("🎉 LEGAL COMPLIANCE ACHIEVED! \\n\\nCongratulations! You successfully:\\n✅ Fixed all critical code issues\\n✅ Properly handled all compliance messages\\n\\nYou demonstrated proper software legal compliance by:\\n• Ensuring accessibility (ADA compliance)\\n• Securing user data (GDPR/privacy laws)\\n• Maintaining functionality (contract law)\\n\\nYou're now a legally compliant developer who understands that code quality and message handling are both essential for avoiding legal consequences!");
+            
+            // Update database with win result
+            if (currentSessionId) {
+              updateGameSession(currentSessionId, {
+                finalScore: 100,
+                issuesFixed: updatedIssues.filter(issue => issue.fixed).length,
+                completed: true,
+              });
+            }
+            
+            setGameOver(true);
+          }
+        }, 100);
       } else if (fixedCount < totalIssues) {
         output += "\nℹ️ Try implementing fixes for remaining issues:\n";
         const remainingIssues = codeIssues.filter(issue => !issue.fixed);
@@ -495,6 +535,16 @@ export default function CourtRoomPage() {
         
         if (allFixed && !hasCriticalMessages && !courtCase && !gameOver) {
           setCourtCase("🎉 LEGAL COMPLIANCE ACHIEVED! \\n\\nCongratulations! You successfully:\\n✅ Fixed all critical code issues\\n✅ Properly handled all compliance messages\\n\\nYou demonstrated proper software legal compliance by:\\n• Ensuring accessibility (ADA compliance)\\n• Securing user data (GDPR/privacy laws)\\n• Maintaining functionality (contract law)\\n\\nYou're now a legally compliant developer who understands that code quality and message handling are both essential for avoiding legal consequences!");
+          
+          // Update database with win result
+          if (currentSessionId) {
+            updateGameSession(currentSessionId, {
+              finalScore: 100,
+              issuesFixed: codeIssues.filter(issue => issue.fixed).length,
+              completed: true,
+            });
+          }
+          
           setGameOver(true);
         }
       }, 100);
@@ -503,15 +553,6 @@ export default function CourtRoomPage() {
     });
   };
 
-  const checkWinCondition = () => {
-    const allFixed = codeIssues.every(issue => issue.fixed);
-    const hasCriticalMessages = messages.some(msg => msg.critical && !msg.dismissed);
-    
-    if (allFixed && !hasCriticalMessages && !courtCase && !gameOver) {
-      setCourtCase("🎉 LEGAL COMPLIANCE ACHIEVED! \\n\\nCongratulations! You successfully:\\n✅ Fixed all critical code issues\\n✅ Properly handled all compliance messages\\n\\nYou demonstrated proper software legal compliance by:\\n• Ensuring accessibility (ADA compliance)\\n• Securing user data (GDPR/privacy laws)\\n• Maintaining functionality (contract law)\\n\\nYou're now a legally compliant developer who understands that code quality and message handling are both essential for avoiding legal consequences!");
-      setGameOver(true);
-    }
-  };
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
