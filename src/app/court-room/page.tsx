@@ -299,21 +299,33 @@ export default function CourtRoomPage() {
       // Debug what's in the code
       output += `🔍 Looking for patterns in: "${selectedCode.substring(0, 50)}${selectedCode.length > 50 ? '...' : ''}"\n\n`;
       
-      if (selectedCode.includes('alt=') || selectedCode.includes('alt ')) {
+      // Check accessibility issue
+      const accessibilityIssue = codeIssues.find(issue => issue.id === "1");
+      if (accessibilityIssue?.fixed) {
+        output += "✅ Accessibility issue already fixed manually\n";
+      } else if (selectedCode.includes('alt=') || selectedCode.includes('alt ')) {
         output += "✅ Found accessibility fix: alt attribute detected\n";
         fixedIssues.push("1");
       } else {
         output += "❌ No alt attribute found (try: alt=\"description\")\n";
       }
       
-      if (selectedCode.includes('sanitiz') || selectedCode.includes('validat') || selectedCode.includes('replace')) {
+      // Check security issue
+      const securityIssue = codeIssues.find(issue => issue.id === "2");
+      if (securityIssue?.fixed) {
+        output += "✅ Security issue already fixed manually\n";
+      } else if (selectedCode.includes('sanitiz') || selectedCode.includes('validat') || selectedCode.includes('replace')) {
         output += "✅ Found security fix: input validation/sanitization detected\n";
         fixedIssues.push("2");
       } else {
         output += "❌ No input validation found (try: replace(), sanitize(), or validate())\n";
       }
       
-      if ((selectedCode.includes('function') && selectedCode.includes('login')) || 
+      // Check functionality issue
+      const functionalityIssue = codeIssues.find(issue => issue.id === "3");
+      if (functionalityIssue?.fixed) {
+        output += "✅ Functionality issue already fixed manually\n";
+      } else if ((selectedCode.includes('function') && selectedCode.includes('login')) || 
           selectedCode.includes('authenticat') || selectedCode.includes('credentials')) {
         output += "✅ Found functionality fix: authentication logic detected\n";
         fixedIssues.push("3");
@@ -321,7 +333,14 @@ export default function CourtRoomPage() {
         output += "❌ No authentication logic found (try: function login() or authenticate)\n";
       }
       
-      if (fixedIssues.length > 0) {
+      // Show overall progress
+      const totalIssues = codeIssues.length;
+      const fixedCount = codeIssues.filter(issue => issue.fixed).length;
+      output += `\n📊 Overall Progress: ${fixedCount}/${totalIssues} issues resolved\n`;
+      
+      if (fixedCount === totalIssues) {
+        output += "🎉 ALL ISSUES RESOLVED! You've achieved legal compliance!\n";
+      } else if (fixedIssues.length > 0) {
         output += `\n🎉 Code Editor Auto-Fix: ${fixedIssues.length} issue(s) automatically resolved!\n`;
         output += "Your code demonstrates understanding of the legal compliance requirements.\n";
         
@@ -336,11 +355,14 @@ export default function CourtRoomPage() {
           fixedIssues: fixedIssues,
           codeLength: selectedCode.length
         });
-      } else {
-        output += "ℹ️ No recognized fixes found. Try implementing:\n";
-        output += "- Alt attributes for images (accessibility)\n";
-        output += "- Input validation/sanitization (security)\n"; 
-        output += "- Authentication functions (functionality)\n";
+      } else if (fixedCount < totalIssues) {
+        output += "\nℹ️ Try implementing fixes for remaining issues:\n";
+        const remainingIssues = codeIssues.filter(issue => !issue.fixed);
+        remainingIssues.forEach(issue => {
+          if (issue.type === 'accessibility') output += "- Alt attributes for images (accessibility)\n";
+          if (issue.type === 'security') output += "- Input validation/sanitization (security)\n";
+          if (issue.type === 'functionality') output += "- Authentication functions (functionality)\n";
+        });
       }
       
       setCodeOutput(output);
