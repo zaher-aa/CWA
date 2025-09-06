@@ -14,6 +14,10 @@ export default function TabsPage() {
   const [generatedCode, setGeneratedCode] = useState("");
   const [showOutput, setShowOutput] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [saveName, setSaveName] = useState("");
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [savedConfigs, setSavedConfigs] = useState<any[]>([]);
+  const [showLoadModal, setShowLoadModal] = useState(false);
 
   // Default tabs
   const defaultTabs: Tab[] = [
@@ -195,6 +199,85 @@ export default function TabsPage() {
     }
   };
 
+  const saveConfiguration = async () => {
+    if (!saveName.trim()) {
+      alert("Please enter a name for your configuration");
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/tabs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: saveName.trim(),
+          tabs: tabs,
+        }),
+      });
+
+      if (response.ok) {
+        alert("Configuration saved successfully!");
+        setSaveName("");
+        setShowSaveModal(false);
+        await loadSavedConfigs();
+      } else {
+        throw new Error('Failed to save configuration');
+      }
+    } catch (error) {
+      console.error('Error saving configuration:', error);
+      alert("Failed to save configuration");
+    }
+  };
+
+  const loadSavedConfigs = async () => {
+    try {
+      const response = await fetch('/api/tabs');
+      if (response.ok) {
+        const configs = await response.json();
+        setSavedConfigs(configs);
+      }
+    } catch (error) {
+      console.error('Error loading configurations:', error);
+    }
+  };
+
+  const loadConfiguration = (config: any) => {
+    setTabs(config.tabs);
+    setActiveTab(config.tabs[0]?.id || "1");
+    setShowLoadModal(false);
+    alert(`Loaded configuration: ${config.name}`);
+  };
+
+  const deleteConfiguration = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this configuration?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/tabs?id=${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        await loadSavedConfigs();
+        alert("Configuration deleted successfully!");
+      } else {
+        throw new Error('Failed to delete configuration');
+      }
+    } catch (error) {
+      console.error('Error deleting configuration:', error);
+      alert("Failed to delete configuration");
+    }
+  };
+
+  useEffect(() => {
+    if (mounted) {
+      loadSavedConfigs();
+    }
+  }, [mounted]);
+
   // Build preview doc so inline <script> in user content executes
   const activeContent = useMemo(
     () => tabs.find((t) => t.id === activeTab)?.content || "",
@@ -242,7 +325,7 @@ ${activeContent}
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
               Tab Builder ({tabs.length}/15)
             </h2>
-            <div className="space-x-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={addTab}
                 disabled={tabs.length >= 15}
@@ -258,6 +341,23 @@ ${activeContent}
                 aria-label="Remove current tab"
               >
                 - Remove Tab
+              </button>
+              <button
+                onClick={() => setShowSaveModal(true)}
+                className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 focus-visible:focus"
+                aria-label="Save configuration"
+              >
+                💾 Save
+              </button>
+              <button
+                onClick={() => {
+                  setShowLoadModal(true);
+                  loadSavedConfigs();
+                }}
+                className="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 focus-visible:focus"
+                aria-label="Load configuration"
+              >
+                📁 Load
               </button>
             </div>
           </div>
@@ -414,6 +514,116 @@ ${activeContent}
                   will also run.
                 </p>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save Configuration Modal */}
+      {showSaveModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
+            <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Save Configuration
+              </h3>
+              <button
+                onClick={() => setShowSaveModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl focus-visible:focus"
+                aria-label="Close save modal"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="p-6">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Configuration Name:
+              </label>
+              <input
+                type="text"
+                value={saveName}
+                onChange={(e) => setSaveName(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter a name for this configuration..."
+              />
+
+              <div className="mt-6 flex space-x-2">
+                <button
+                  onClick={saveConfiguration}
+                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium focus-visible:focus"
+                >
+                  💾 Save
+                </button>
+                <button
+                  onClick={() => setShowSaveModal(false)}
+                  className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors font-medium focus-visible:focus"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Load Configuration Modal */}
+      {showLoadModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Load Configuration
+              </h3>
+              <button
+                onClick={() => setShowLoadModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl focus-visible:focus"
+                aria-label="Close load modal"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[70vh]">
+              {savedConfigs.length === 0 ? (
+                <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+                  No saved configurations found.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {savedConfigs.map((config) => (
+                    <div
+                      key={config.id}
+                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900 dark:text-white">
+                            {config.name}
+                          </h4>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            {config.tabs.length} tabs • Created: {new Date(config.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex space-x-2 ml-4">
+                          <button
+                            onClick={() => loadConfiguration(config)}
+                            className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors focus-visible:focus"
+                          >
+                            Load
+                          </button>
+                          <button
+                            onClick={() => deleteConfiguration(config.id)}
+                            className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors focus-visible:focus"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

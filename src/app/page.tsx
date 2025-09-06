@@ -54,16 +54,19 @@ export default function Home() {
           </span>
         </div>
 
-        <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-600 opacity-75">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
             ⚖️ Court Room
           </h3>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             Legal case simulation with interactive decision-making elements.
           </p>
-          <span className="inline-block bg-gray-400 text-white px-4 py-2 rounded cursor-not-allowed">
-            Coming Soon
-          </span>
+          <Link
+            href="/court-room"
+            className="inline-block bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors focus-visible:focus"
+          >
+            Enter Court →
+          </Link>
         </div>
 
         <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-600 opacity-75">
