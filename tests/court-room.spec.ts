@@ -13,9 +13,9 @@ test.describe('Court Room Simulation', () => {
     await expect(page.locator('input[type="number"]')).toBeVisible();
     await expect(page.locator('button:has-text("🚨 Start Court Room Challenge")')).toBeVisible();
     
-    // Check instructions
-    await expect(page.locator('h3:has-text("📋 How it Works:")')).toBeVisible();
-    await expect(page.locator('text=Fix code issues before time runs out')).toBeVisible();
+    // Check instructions (updated text)
+    await expect(page.locator('h3:has-text("📋 How to Play:")')).toBeVisible();
+    await expect(page.locator('text=Fix all 3 code issues AND dismiss critical messages before time runs out')).toBeVisible();
   });
 
   test('should start the game with custom timer', async ({ page }) => {
